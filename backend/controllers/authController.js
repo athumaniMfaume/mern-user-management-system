@@ -104,7 +104,12 @@ export const refreshToken = async (req, res) => {
 
     res.status(200).json({
       accessToken: newAccessToken,
-      role: user.role,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('Error refreshing token', error);
@@ -113,14 +118,17 @@ export const refreshToken = async (req, res) => {
 };
 
 
+
 export const logout = async (req, res) => {
   try {
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // must match the cookie setting in login
-      sameSite: 'None', // use 'None' if your frontend is on a different domain
-      path: '/',        // ensure the correct cookie path is cleared
-    });
+res.cookie('refreshToken', refreshToken, {
+  httpOnly: true,
+  secure: false,        // ✅ false for localhost
+  sameSite: 'Lax',      // ✅ works for local dev
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  path: '/',
+});
+
 
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
