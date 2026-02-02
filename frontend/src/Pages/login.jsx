@@ -46,7 +46,7 @@ const login = () => {
                 onChange={(e)=> setForm({...form, email: e.target.value
                 })}
 
-                 />
+                 required/>
             </div>
             <div>
                 <label className='block mb-2 font-medium' htmlFor="password">Password:</label>
@@ -55,6 +55,7 @@ const login = () => {
                 value={form.password}
                 onChange={(e)=> setForm({...form, password: e.target.value
                 })}
+                required
                  />
             </div>
             <div>
