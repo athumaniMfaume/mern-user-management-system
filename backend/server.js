@@ -1,5 +1,4 @@
 // backend/server.js
-
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -23,26 +22,26 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cookieParser());
 
-// Allow CORS for frontend dev URL
+// CORS for dev frontend
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
 
-// -------------------- Routes --------------------
+// -------------------- API Routes --------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // -------------------- Connect Database --------------------
 connectDB();
 
-// -------------------- Serve Frontend in Production --------------------
+// -------------------- Serve React Frontend --------------------
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // Catch-all route to serve React index.html for React Router
-  app.get('*', (req, res) => {
+  // Catch-all must be LAST, AFTER API routes
+  app.get(/.*/, (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 } else {
@@ -53,7 +52,6 @@ if (process.env.NODE_ENV === 'production') {
 
 // -------------------- Start Server --------------------
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
