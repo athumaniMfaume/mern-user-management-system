@@ -1,45 +1,48 @@
+// backend/server.js
+
 import express from 'express';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
-import connectDB from './config/db.js';
 
 dotenv.config();
 
+const app = express();
+
+// -------------------- Utils --------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-
-// Middleware
+// -------------------- Middleware --------------------
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-  })
-);
 
-// API Routes
+// Allow CORS for frontend dev URL
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+
+// -------------------- Routes --------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-// Connect to MongoDB
+// -------------------- Connect Database --------------------
 connectDB();
 
-// Serve React frontend in production
+// -------------------- Serve Frontend in Production --------------------
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // Catch-all using express.static fallback
-  app.use((req, res) => {
+  // Catch-all route to serve React index.html for React Router
+  app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 } else {
@@ -48,8 +51,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Start server
+// -------------------- Start Server --------------------
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
