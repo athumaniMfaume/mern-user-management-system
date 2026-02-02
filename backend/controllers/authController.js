@@ -40,10 +40,21 @@ export const login = async (req, res) => {
   }
 
   try {
+    // Log the email trying to login
+    console.log('Logging in user:', email);
+
     const user = await User.findOne({ email });
+
+    // Log the user found in DB
+    console.log('User found:', user);
+
     if (!user) return res.status(400).json({ message: 'User not found' });
 
     const isMatch = await bcrypt.compare(password, user.password);
+
+    // Log whether password matches
+    console.log('Password match:', isMatch);
+
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
     const accessToken = jwt.sign(
@@ -58,12 +69,11 @@ export const login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Set refresh token in cookie
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true in prod
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
 
@@ -81,6 +91,7 @@ export const login = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // -------------------- Refresh Token --------------------
 export const refreshToken = async (req, res) => {
