@@ -22,7 +22,6 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS: adjust origin in production
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -39,12 +38,14 @@ connectDB();
 
 // Serve React frontend (production)
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files from frontend build
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  const frontendPath = path.join(__dirname, '../frontend/dist');
 
-  // Catch-all route to serve index.html for React Router
-  app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  // Serve static files
+  app.use(express.static(frontendPath));
+
+  // Catch-all route for React Router
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
