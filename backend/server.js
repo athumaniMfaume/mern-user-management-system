@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ FIXED CORS: Allowed both local dev and production URL
+// ✅ FIX CORS: Allow Render URL and Local Dev
 app.use(cors({
   origin: [
     'http://localhost:5173', 
@@ -40,9 +40,8 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // Catch-all route to serve index.html for SPA routing
-  app.get('*', (req, res) => {
-    // Only serve index.html if the request is not for an API route
+  // ✅ FIX PathError: Express 5 requires named parameters for wildcards
+  app.get('/:any*', (req, res) => {
     if (!req.path.startsWith('/api')) {
       res.sendFile(path.join(frontendPath, 'index.html'));
     }
@@ -53,7 +52,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// -------------------- Start Server --------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
+
