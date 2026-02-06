@@ -5,7 +5,7 @@ import Login from "./Pages/login";
 import Register from "./Pages/Register";
 import AdminDashboard from "./Pages/AdminDashboard";
 import UserDashboard from "./Pages/UserDashboard";
-import PrivateRoute from "./components/PrivateRoutes";
+import PrivateRoutes from "./components/PrivateRoutes"; // ✅ Imported as PrivateRoutes
 import { PublicRoutes } from "./components/PublicRoutes";
 
 function App() {
@@ -36,9 +36,10 @@ function App() {
           <Route
             path="/admin"
             element={
-              <PrivateRoute allowedRoles={["admin"]}>
+              /* ✅ Changed to PrivateRoutes to match import */
+              <PrivateRoutes allowedRoles={["admin"]}>
                 <AdminDashboard />
-              </PrivateRoute>
+              </PrivateRoutes>
             }
           />
 
@@ -46,9 +47,10 @@ function App() {
           <Route
             path="/user"
             element={
-              <PrivateRoute allowedRoles={["user"]}>
+              /* ✅ Changed to PrivateRoutes to match import */
+              <PrivateRoutes allowedRoles={["user"]}>
                 <UserDashboard />
-              </PrivateRoute>
+              </PrivateRoutes>
             }
           />
 
@@ -56,7 +58,8 @@ function App() {
           <Route
             path="/"
             element={
-              <PrivateRoute>
+              /* ✅ Changed to PrivateRoutes to match import */
+              <PrivateRoutes>
                 {(auth) =>
                   auth?.role === "admin" ? (
                     <AdminDashboard />
@@ -64,7 +67,7 @@ function App() {
                     <UserDashboard />
                   )
                 }
-              </PrivateRoute>
+              </PrivateRoutes>
             }
           />
         </Routes>
@@ -74,4 +77,5 @@ function App() {
 }
 
 export default App;
+
 
