@@ -1,6 +1,11 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import axios from "axios";
 
+// ✅ FIXED: Automatically switch between local and production API URLs
+axios.defaults.baseURL = import.meta.env.PROD 
+  ? 'https://mern-user-management-system.onrender.com' 
+  : 'http://localhost:5000';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -10,19 +15,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Use relative path - axios will prepend the baseURL set above
         const res = await axios.get("/api/auth/refresh", {
           withCredentials: true,
         });
 
-        // Make sure your backend returns `accessToken` and `user` object
         if (res.data.accessToken && res.data.user) {
           setAuth({
             accessToken: res.data.accessToken,
             role: res.data.user.role,
             user: res.data.user,
           });
-        } else {
-          setAuth(null);
         }
       } catch (error) {
         setAuth(null);

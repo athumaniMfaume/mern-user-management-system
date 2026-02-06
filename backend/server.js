@@ -1,4 +1,3 @@
-// backend/server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -13,8 +12,6 @@ import userRoutes from './routes/users.js';
 dotenv.config();
 
 const app = express();
-
-// -------------------- Utils --------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -22,9 +19,12 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS for dev frontend
+// ✅ FIXED CORS: Allowed both local dev and production URL
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173', 
+    'https://mern-user-management-system.onrender.com'
+  ],
   credentials: true,
 }));
 
@@ -40,9 +40,12 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // Catch-all must be LAST, AFTER API routes
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+  // Catch-all route to serve index.html for SPA routing
+  app.get('*', (req, res) => {
+    // Only serve index.html if the request is not for an API route
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    }
   });
 } else {
   app.get('/', (req, res) => {
@@ -50,8 +53,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// -------------------- Start Server --------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
