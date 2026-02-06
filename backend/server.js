@@ -19,7 +19,6 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ FIX CORS: Allow Render URL and Local Dev
 app.use(cors({
   origin: [
     'http://localhost:5173', 
@@ -40,11 +39,13 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // ✅ FIX PathError: Express 5 requires named parameters for wildcards
-  app.get('/:any*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(frontendPath, 'index.html'));
-    }
+  /**
+   * ✅ FIX: Express 5 Catch-all
+   * This regex matches all routes EXCEPT those starting with /api
+   * It avoids the "Missing parameter name" PathError
+   */
+  app.get(/^((?!\/api).)*$/, (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {
