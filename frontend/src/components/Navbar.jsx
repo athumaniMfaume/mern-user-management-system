@@ -4,11 +4,11 @@ import axios from 'axios';
 
 export const Navbar = () => {
   const navigate = useNavigate();
-  const { auth, setAuth } = useAuth(); // ✅ remove (null)
+  const { auth, setAuth } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
       setAuth(null);
       navigate('/login');
     } catch (error) {
@@ -17,29 +17,19 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gray-800 p-4 text-white">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-lg font-bold">
-          Home
-        </Link>
-        <div>
+    <nav className="bg-white border-b shadow-sm py-4">
+      <div className="container mx-auto px-6 flex justify-between items-center">
+        <Link to="/" className="text-2xl font-black text-blue-600">APP</Link>
+        <div className="flex items-center space-x-6">
           {auth?.accessToken ? (
             <>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-              >
-                Logout
-              </button>
+              <span className="text-gray-600">Hi, <b className="text-gray-900">{auth.username}</b></span>
+              <button onClick={handleLogout} className="text-red-500 font-semibold hover:text-red-700">Logout</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-white mr-4">
-                Login
-              </Link>
-              <Link to="/register" className="text-white">
-                Register
-              </Link>
+              <Link to="/login" className="text-gray-600 font-semibold">Login</Link>
+              <Link to="/register" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Join</Link>
             </>
           )}
         </div>
@@ -47,4 +37,6 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+
 
