@@ -5,7 +5,8 @@ import Login from "./Pages/login";
 import Register from "./Pages/Register";
 import AdminDashboard from "./Pages/AdminDashboard";
 import UserDashboard from "./Pages/UserDashboard";
-import PrivateRoutes from "./components/PrivateRoutes"; // ✅ Imported as PrivateRoutes
+import Donate from "./Pages/Donate"; 
+import PrivateRoutes from "./components/PrivateRoutes"; 
 import { PublicRoutes } from "./components/PublicRoutes";
 
 function App() {
@@ -14,59 +15,21 @@ function App() {
       <AuthProvider>
         <Navbar />
         <Routes>
-          {/* Public routes */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoutes>
-                <Login />
-              </PublicRoutes>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoutes>
-                <Register />
-              </PublicRoutes>
-            }
-          />
+          {/* --- GUESTS ONLY (Redirects to Home if logged in) --- */}
+          <Route path="/login" element={<PublicRoutes><Login /></PublicRoutes>} />
+          <Route path="/register" element={<PublicRoutes><Register /></PublicRoutes>} />
+          
+          {/* --- ACCESSIBLE TO EVERYONE (No Wrappers) --- */}
+          <Route path="/donate" element={<Donate />} />
 
-          {/* Private route for Admin */}
-          <Route
-            path="/admin"
-            element={
-              /* ✅ Changed to PrivateRoutes to match import */
-              <PrivateRoutes allowedRoles={["admin"]}>
-                <AdminDashboard />
-              </PrivateRoutes>
-            }
-          />
+          {/* --- PRIVATE (Login Required) --- */}
+          <Route path="/admin" element={<PrivateRoutes allowedRoles={["admin"]}><AdminDashboard /></PrivateRoutes>} />
+          <Route path="/user" element={<PrivateRoutes allowedRoles={["user"]}><UserDashboard /></PrivateRoutes>} />
 
-          {/* Private route for User */}
-          <Route
-            path="/user"
-            element={
-              /* ✅ Changed to PrivateRoutes to match import */
-              <PrivateRoutes allowedRoles={["user"]}>
-                <UserDashboard />
-              </PrivateRoutes>
-            }
-          />
-
-          {/* Default route (redirects based on role) */}
-          <Route
-            path="/"
-            element={
-              /* ✅ Changed to PrivateRoutes to match import */
+          {/* --- DEFAULT REDIRECT --- */}
+          <Route path="/" element={
               <PrivateRoutes>
-                {(auth) =>
-                  auth?.role === "admin" ? (
-                    <AdminDashboard />
-                  ) : (
-                    <UserDashboard />
-                  )
-                }
+                {(auth) => auth?.role === "admin" ? <AdminDashboard /> : <UserDashboard />}
               </PrivateRoutes>
             }
           />
@@ -77,5 +40,6 @@ function App() {
 }
 
 export default App;
+
 
 
