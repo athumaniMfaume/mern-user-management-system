@@ -14,7 +14,6 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Dynamic CORS based on Environment
 const allowedOrigins = [
   'http://localhost:5173', 
   'https://mern-user-management-system.onrender.com'
@@ -34,7 +33,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payment', paymentRoutes);
@@ -46,14 +45,11 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  // FIXED: Changed '(.*)' to '/:path*' to comply with strict routing in Node 22/Express 5
-  app.get('/:path*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(frontendPath, 'index.html'));
-    }
+  // ULTIMATE FIX: Use a literal Regular Expression to bypass path-to-regexp string parsing
+  app.get(/^(?!\/api).+/, (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
