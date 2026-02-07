@@ -46,7 +46,8 @@ if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(frontendPath));
 
-  app.get('*', (req, res) => {
+  // FIXED: Changed '*' to '(.*)' to comply with path-to-regexp in Node 22/Express 5
+  app.get('(.*)', (req, res) => {
     if (!req.path.startsWith('/api')) {
       res.sendFile(path.join(frontendPath, 'index.html'));
     }
@@ -55,4 +56,3 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
