@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 
 const Donate = () => {
-  const { auth } = useAuth(); 
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
+  const [method, setMethod] = useState('halopesa'); // HALOPESA / MPESA
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
+  const [isMock, setIsMock] = useState(false);
+
+  // Check if HALOPESA mock mode is active
+  useEffect(() => {
+    const checkMockMode = async () => {
+      try {
+        const res = await axios.get('/api/payment/check-mock');
+        setIsMock(res.data.mock === true);
+      } catch {
+        setIsMock(false);
+      }
+    };
+    checkMockMode();
+  }, []);
+
+  // Helper: convert TZ number to sandbox 2547XXXXXXXX
+  const convertToSandboxNumber = (tzNumber) => {
+    const last8 = tzNumber.slice(-8); // last 8 digits
+    return `2547${last8}`; // safaricom sandbox format
+  };
 
   const handleDonate = async (e) => {
     e.preventDefault();
-    
-    // Validation
+
     if (!phone.startsWith('255') || phone.length !== 12) {
-      setError("Phone must start with 255 and be 12 digits long.");
+      setError("Phone must start with 255 (e.g., 255627...)");
       return;
     }
 
@@ -24,119 +42,132 @@ const Donate = () => {
     setSuccess(null);
 
     try {
-      // NOTE: axios.defaults.baseURL handles the Local/Prod switch
-      // Interceptors handle the Bearer token (if auth exists)
-      const res = await axios.post('/api/payment/donate', { 
-        amount, 
-        accountNumber: phone 
-      });
-      
+      let endpoint = '';
+      let payload = {};
+
+      if (method === 'halopesa') {
+        endpoint = '/api/payment/donate/halopesa';
+        payload = { amount, phone };
+      } else if (method === 'mpesa') {
+        endpoint = '/api/payment/donate/mpesa';
+        payload = {
+          amount,
+          phone: convertToSandboxNumber(phone), // convert TZ -> sandbox
+        };
+      }
+
+      const res = await axios.post(endpoint, payload);
+
       if (res.data.success) {
-        setSuccess("Initiated! Please enter your PIN on your phone to confirm.");
+        const modeNotice =
+          method === 'halopesa' && isMock
+            ? " (Simulation Mode: No real money charged)"
+            : "";
+
+        setSuccess(
+          `Initiated via ${method.toUpperCase()}! Enter PIN on your phone.${modeNotice}`
+        );
         setAmount('');
         setPhone('');
-      } else {
-        setError("Azampay was unable to start the transaction. Try again.");
       }
     } catch (err) {
-      console.error("Payment Error:", err);
-      setError(err.response?.data?.message || "Payment failed. Please check your network.");
+      setError(err.response?.data?.message || "Payment failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden border-t-4 border-indigo-600">
-        
-        <div className="bg-indigo-600 p-5">
-          <h2 className="text-xl font-bold text-white text-center uppercase tracking-widest">
-            Support Our Project
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-md border-t-4 border-indigo-600">
+        <div className="bg-indigo-600 p-5 text-center">
+          <h2 className="text-xl font-bold text-white uppercase tracking-widest">
+            Support Us
           </h2>
-          <p className="text-[10px] text-indigo-100 text-center uppercase mt-1 tracking-widest">
-            Secure Donation via AzamPay
+          <p className="text-[10px] text-indigo-100 uppercase mt-1">
+            Secure Mobile Donation
           </p>
+          {isMock && (
+            <p className="text-[9px] text-yellow-100 mt-1">
+              ⚠️ HALOPESA Simulation Mode Active
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleDonate} className="p-8 space-y-5">
-          
           {success && (
-            <div className="p-3 bg-green-50 border-l-4 border-green-500 text-green-700 text-[11px] font-bold rounded shadow-sm">
-              <span className="block mb-1">✅ SUCCESS</span>
+            <div className="p-3 bg-green-50 text-green-700 text-[11px] font-bold border-l-4 border-green-500">
               {success}
             </div>
           )}
-          
           {error && (
-            <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-[11px] font-bold rounded shadow-sm">
-              <span className="block mb-1">❌ ERROR</span>
+            <div className="p-3 bg-red-50 text-red-700 text-[11px] font-bold border-l-4 border-red-500">
               {error}
             </div>
           )}
 
+          {/* Method Selector */}
+          <div className="flex space-x-2">
+            <button
+              type="button"
+              onClick={() => setMethod('halopesa')}
+              className={`flex-1 py-2 text-[10px] font-bold rounded border ${
+                method === 'halopesa'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-50'
+              }`}
+            >
+              HALOPESA
+            </button>
+            <button
+              type="button"
+              onClick={() => setMethod('mpesa')}
+              className={`flex-1 py-2 text-[10px] font-bold rounded border ${
+                method === 'mpesa'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-50'
+              }`}
+            >
+              MPESA
+            </button>
+          </div>
+
+          {/* Amount */}
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">
               Amount (TZS)
             </label>
-            <input 
+            <input
               type="number"
-              className="w-full p-3 border border-gray-200 rounded text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 transition-all"
-              placeholder="e.g. 5000"
+              className="w-full p-3 border rounded text-sm bg-gray-50"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
-              min="100"
             />
           </div>
 
+          {/* Phone */}
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-              Phone Number (M-Pesa / TigoPesa / Airtel)
+            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">
+              Phone (255...)
             </label>
-            <input 
+            <input
               type="text"
-              className="w-full p-3 border border-gray-200 rounded text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 transition-all"
-              placeholder="2557XXXXXXXX"
+              className="w-full p-3 border rounded text-sm bg-gray-50"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              placeholder="255XXXXXXXXX"
               required
             />
-            <div className="flex justify-between mt-1">
-               <p className="text-[9px] text-gray-400 italic">Format: 255765112233</p>
-               <p className="text-[9px] text-indigo-500 font-bold uppercase tracking-tight">TZ Network Only</p>
-            </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
-            className={`w-full flex justify-center items-center text-white font-bold py-4 rounded uppercase text-xs tracking-widest shadow-lg transition-all ${
-              loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'
-            }`}
+            className="w-full bg-indigo-600 text-white font-bold py-4 rounded text-xs tracking-widest hover:bg-indigo-700"
           >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : 'Donate Now'}
+            {loading ? 'Processing...' : 'Donate Now'}
           </button>
-          
-          <div className="pt-4 border-t border-gray-100">
-            <p className="text-center text-[9px] text-gray-400 uppercase font-bold tracking-widest mb-3">
-              Supported Networks
-            </p>
-            <div className="flex justify-center items-center space-x-6 opacity-40 grayscale hover:opacity-80 transition-opacity">
-              <span className="font-black text-xs">M-PESA</span>
-              <span className="font-black text-xs text-red-600">AIRTEL</span>
-              <span className="font-black text-xs text-blue-600">TIGO</span>
-              <span className="font-black text-xs text-orange-500">HALOPESA</span>
-            </div>
-          </div>
         </form>
       </div>
     </div>

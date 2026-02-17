@@ -1,22 +1,20 @@
-import express from 'express';
-import { initiateAzamPay, azamPayCallback } from '../controllers/paymentController.js';
-// verifyToken is no longer needed here if we want everyone to donate
-// import { verifyToken } from '../middleware/authMiddleware.js'; 
+import express from "express";
+import {
+  initiateHaloPesa,
+  initiateAzamPay,
+  azamPayCallback,
+  initiateMpesa,
+  mpesaCallback,
+} from "../controllers/paymentController.js";
 
 const router = express.Router();
 
-/**
- * @route   POST /api/payment/donate
- * @desc    Initiate donation (Public - Accessible to all)
- */
-// ✅ REMOVED verifyToken to allow Guest + Authenticated users to donate
-router.post('/donate', initiateAzamPay);
+router.post("/donate/halopesa", initiateHaloPesa);
+router.post("/donate/azampay", initiateAzamPay);
+router.post("/donate/mpesa", initiateMpesa);
 
-/**
- * @route   POST /api/payment/callback
- * @desc    Azampay Webhook to confirm payment status (Public)
- */
-router.post('/callback', azamPayCallback);
+router.post("/callback/azam", azamPayCallback);
+router.post("/callback/mpesa", mpesaCallback);
 
 export default router;
 
